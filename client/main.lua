@@ -80,10 +80,12 @@ CreateThread(function()
     SetPedCanPlayInjuredAnims(targetped, false)
     FreezeEntityPosition(targetped, true)
     SetEntityInvincible(targetped, true)
+    local netid = NetworkGetNetworkIdFromEntity(targetped)
+
 
     if Config.UseMenu == true then
         if Config.Menu == 'qb' and Config.Target == 'qb' then
-            exports['qb-target']:AddTargetModel({pedHash}, {
+            exports['qb-target']:AddTargetModel({netid}, {
                 options = {
                     {
                         num = 1,
@@ -99,7 +101,7 @@ CreateThread(function()
         end
     else
         if Config.Target == 'qb' then
-            exports['qb-target']:AddTargetModel({pedHash}, {
+            exports['qb-target']:AddTargetModel({netid}, {
                 options = {
                     {
                         num = 1,

@@ -29,7 +29,7 @@ Config.TrailerToSpawn = "tanker2" -- Must be a tanker variant, or else the rope 
 
 Config.PayPerFueling = math.random(1200, 2500) -- This is multiplied by the amount of refuels the player does. So if they refuel 5 stations, they will get 5*math.random
 
-Config.FuelScript = 'LegacyFuel' -- cdn-fuel or ps-fuel or LegacyFuel
+Config.FuelScript = 'cdn-fuel' -- cdn-fuel or ps-fuel or LegacyFuel
 
 Config.PayType = 'bank' -- Where does the money come from? bank or cash
 

@@ -8,6 +8,7 @@ description 'Fuel Delivery Job'
 version '1.0.0'
 
 shared_scripts {
+    '@ox_lib/init.lua',
     'config.lua',
     '@PolyZone/client.lua',
     '@PolyZone/BoxZone.lua'

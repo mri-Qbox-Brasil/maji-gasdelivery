@@ -55,3 +55,24 @@ AddEventHandler('md-getpaid', function(stationsRefueled)
     local balance = Player.Functions.GetMoney(moneyType)
     Player.Functions.AddMoney(Config.PayType, stationsRefueled * Config.PayPerFueling, "gas-delivery-paycheck")
 end)
+
+Refuelcdn = false
+
+RegisterServerEvent('md-refuelcdn:server:set')
+AddEventHandler('md-refuelcdn:server:set', function()
+    Refuelcdn = true
+end)
+
+RegisterServerEvent('md-refuelcdn:server:delete')
+AddEventHandler('md-refuelcdn:server:delete', function()
+    TriggerClientEvent('md-refuelcdn:client:delete', -1)
+    Refuelcdn = false
+end)
+
+lib.callback.register('md-refuelcdn:server:status', function(source)
+    return Refuelcdn
+end)
+
+function Refuelcdn_status()
+    return Refuelcdn
+end exports('Refuelcdn_status', Refuelcdn_status)

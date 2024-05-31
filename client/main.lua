@@ -80,19 +80,17 @@ CreateThread(function()
     SetPedCanPlayInjuredAnims(targetped, false)
     FreezeEntityPosition(targetped, true)
     SetEntityInvincible(targetped, true)
-    local netid = NetworkGetNetworkIdFromEntity(targetped)
-
 
     if Config.UseMenu == true then
         if Config.Menu == 'qb' and Config.Target == 'qb' then
-            exports['qb-target']:AddTargetModel({netid}, {
+            exports['qb-target']:AddTargetModel({pedHash}, {
                 options = {
                     {
                         num = 1,
                         type = "client",
                         event = "md-opentruckermenu",
                         icon = "fas fa-sign-in-alt",
-                        label = "Talk To Boss!",
+                        label = "Fale com o chefe!",
                     },
                   
                 },
@@ -101,35 +99,35 @@ CreateThread(function()
         end
     else
         if Config.Target == 'qb' then
-            exports['qb-target']:AddTargetModel({netid}, {
+            exports['qb-target']:AddTargetModel({pedHash}, {
                 options = {
                     {
                         num = 1,
                         type = "server",
                         event = "md-checkCash",
                         icon = "fas fa-sign-in-alt",
-                        label = "Rent a Truck and Start Work",
+                        label = "Alugue um caminhão e comece a trabalhar",
                     },
                     {
                         num = 2,
                         type = "server",
                         event = "md-ownedtruck",
                         icon = "fas fa-sign-in-alt",
-                        label = "Start Work With Your Own Truck",
+                        label = "Comece a trabalhar com seu próprio caminhão",
                     },
                     {
                         num = 3,
                         type = "client",
                         event = "GetTruckerPay",
                         icon = "fas fa-money-bill-wave",
-                        label = "Get Paycheck",
+                        label = "Obtenha salário",
                     },
                     {
                         num = 4,
                         type = "client",
                         event = "RestartJob",
                         icon = "fas fa-ban",
-                        label = "Restart Job",
+                        label = "Reiniciar o trabalho",
                     },
                 },
                 distance = 2.0,
@@ -156,50 +154,76 @@ Citizen.CreateThread(function()
 end)
 
 --/////////////////////////////////////////////////////////////////////////////////////////////////--
+Refuelcdn = {}
+RegisterNetEvent("md-refuelcdn:client:set", function(amount, NewAmount, location)
+    local amount = amount
+    local NewAmount = NewAmount
+    local location = location
+    print(amount, NewAmount, location)
+    Refuelcdn = {amount, NewAmount, location}
+end)
+
+RegisterNetEvent("md-refuelcdn:client:delete", function()
+    Refuelcdn = {}
+end)
 
 RegisterNetEvent("md-opentruckermenu")
 AddEventHandler("md-opentruckermenu", function()
-    exports['qb-menu']:openMenu({
-        {
-            header = "Gas Delivery Job",
-            txt = "",
-            isMenuHeader = true
-        },
-        {
-            header = "Rent a Truck and Start Work",
-            txt = "Rent a Truck and Start Work. Additional Rental fees will be taken from you.",
-            icon = "fas fa-sign-in-alt",
-            params = {
-                event = "md-checkCash",
-            }
-        },
-        {
-            header = "Start Work With Your Own Truck",
-            txt = "Start Work With Your Own Truck. only the Trailer Fees will be taken from you",
-            icon = "fas fa-sign-in-alt",
-            params = {
-                event = "md-ownedtruck",
-            }
-        },
-        {
-            header = "Get Paycheck",
-            txt = "Get Your Paycheck",
-            icon = "fas fa-money-bill-wave",
-            params = {
-                event = "GetTruckerPay",
-            }
-        },
-        {
-            header = "Restart Job",
-            txt = "Restart The Job",
-            icon = "fas fa-ban",
-            params = {
-                event = "RestartJob",
-            }
-        },
-        
+    local options = {}
+    local status = lib.callback('md-refuelcdn:server:status', false)
+
+    local cdnfuel_desc = "Realizar o trabalho de reabastecimento de posto."
+    if not status then
+        cdnfuel_desc = "Sem pedidos. Trabalho indisponível."
+    end
+
+    options[#options+1] = {
+        title = 'Reabastecer Posto',
+        description = cdnfuel_desc,
+        icon = 'fa-solid fa-gas-pump',
+        disabled = not status,
+        onSelect = function()
+            TriggerEvent('cdn-fuel:station:client:initiatefuelpickup', Refuelcdn[1], Refuelcdn[2], Refuelcdn[3])
+            TriggerServerEvent("md-refuelcdn:server:delete")
+        end
+    }
+
+    options[#options+1] = {
+        title = 'Alugue um caminhão e comece a trabalhar',
+        description = 'Alugue um caminhão e comece a trabalhar. Taxas de aluguel adicionais serão tiradas de você.',
+        icon = 'fas fa-sign-in-alt',
+        event = 'md-checkCash'
+    }
+
+    options[#options+1] = {
+        title = 'Comece a trabalhar com seu próprio caminhão',
+        description = 'Comece a trabalhar com seu próprio caminhão. Somente as taxas de trailer serão tiradas de você.',
+        icon = 'fas fa-sign-in-alt',
+        event = 'md-ownedtruck'
+    }
+
+    options[#options+1] = {
+        title = 'Obtenha salário',
+        description = 'Obtenha seu salário',
+        icon = 'fas fa-money-bill-wave',
+        event = 'GetTruckerPay'
+    }
+
+    options[#options+1] = {
+        title = 'Reiniciar o trabalho',
+        description = 'Reinicie o Trabalho',
+        icon = 'fas fa-ban',
+        event = 'RestartJob'
+    }
+
+    lib.registerContext({
+        id = 'gas_job_menu',
+        title = 'Caminhoneiro',
+        description = 'Entrega de gás',
+        options = options,
     })
-   
+
+    lib.showContext('gas_job_menu')
 end)
 
 RegisterNetEvent("spawnTruck")
@@ -269,7 +293,7 @@ RegisterNetEvent('TrailerBlip', function()
     SetBlipScale(blip, 1.0)
     SetBlipRoute(blip, true)
     SetBlipFlashes(blip, true)
-    QBCore.Functions.Notify('Go get your tanker!', 'success', 5000)
+    QBCore.Functions.Notify('Vá buscar seu tanque!', 'success', 5000)
 
     Citizen.CreateThread(function()
         while true do
@@ -303,7 +327,7 @@ RegisterNetEvent('spawnFlashingBlip', function()
     SetBlipScale(blip, 1.0)
     SetBlipRoute(blip, true)
     SetBlipFlashes(blip, true)
-    QBCore.Functions.Notify('Go fuel up your tanker!', 'success', 5000)
+    QBCore.Functions.Notify('Vá abastecer seu tanque!', 'success', 5000)
     local pumpProp = CreateObject('prop_storagetank_02b', 1688.59, -1460.29, 111.65, true, false, false)
     SetEntityHeading(pumpProp, refuelheading)
     FreezeEntityPosition(pumpProp, true)
@@ -338,7 +362,7 @@ RegisterNetEvent('refuelTanker', function()
     local hasTrailer, trailerHandle = GetVehicleTrailerVehicle(vehicle, trailer)
     if truck == 1 then
         if not hasTrailer then
-            QBCore.Functions.Notify('You need to get your tanker!', 'error', 5000)
+            QBCore.Functions.Notify('Você precisa pegar seu tanque!', 'error', 5000)
         else
             if cooldown == 0 then
                 local playerPed = PlayerPedId()
@@ -376,7 +400,7 @@ RegisterNetEvent('refuelTanker', function()
                         local currentcoords = GetEntityCoords(playerPed)
                         local dist = #(grabbednozzlecoords - currentcoords)
                         if dist > 10.0 then
-                            QBCore.Functions.Notify('Your fuel line has broken!', 'error', 5000)
+                            QBCore.Functions.Notify('Sua linha de combustível quebrou!', 'error', 5000)
                             nozzleInHand = false
                             FreezeEntityPosition(trailerId, false)
                             DeleteObject(fuelnozzle1)
@@ -387,11 +411,11 @@ RegisterNetEvent('refuelTanker', function()
                     end
                 end)
             else
-                QBCore.Functions.Notify('You have already fueled your truck!', 'error', 5000)
+                QBCore.Functions.Notify('Você já abasteceu seu caminhão!', 'error', 5000)
             end
         end
     else
-        QBCore.Functions.Notify('You do not have a truck!', 'error', 5000)
+        QBCore.Functions.Notify('Você não tem um caminhão!', 'error', 5000)
     end
 end)
 
@@ -425,7 +449,7 @@ function BringToTruck()
                 if not insideZone then
                     insideZone = true
                     if truck == 1 and cooldown == 0 then
-                        QBCore.Functions.Notify('Go fuel up the tanker!', 'success', 5000)
+                        QBCore.Functions.Notify('Vá abastecer o tanque!', 'success', 5000)
                         if Config.Target == 'qb' then
                             for _, model in ipairs(trailerModels) do
                                 local modelHash = tonumber(model)
@@ -435,7 +459,7 @@ function BringToTruck()
                                     type = "client",
                                     event = "FuelTruck",
                                     icon = "fas fa-gas-pump",
-                                    label = "Fuel Truck",
+                                    label = "Encher Caminhão de Combustível",
                                     canInteract = function()
                                         if nozzleInHand and cooldown == 0 then
                                             return true
@@ -451,14 +475,14 @@ function BringToTruck()
 			            end
                     end
                     if Config.Debug == true then
-                        print("Player has entered the box zone")
+                        print("O jogador entrou na zona da caixa")
                     end
                 end
             else
                 if insideZone then
                     insideZone = false
                     if Config.Debug == true then
-                        print("Player has left the box zone")
+                        print("O jogador deixou a zona da caixa")
                     end
                 end
             end
@@ -473,7 +497,7 @@ local playerPed = PlayerPedId()
 LoadAnimDict("timetable@gardener@filling_can")
 TaskPlayAnim(playerPed, "timetable@gardener@filling_can", "gar_ig_5_filling_can", 8.0, 1.0, -1, 1, 0, 0, 0, 0)
 TriggerServerEvent("InteractSound_SV:PlayOnSource", "refuel", 0.3)
-QBCore.Functions.Progressbar('Refueling', 'Refueling Tanker...', 15000, false, true, {
+QBCore.Functions.Progressbar('Refueling', 'Tanque de reabastecimento...', 15000, false, true, {
     disableMovement = true,
     disableCarMovement = true,
     disableMouse = false,
@@ -483,14 +507,14 @@ QBCore.Functions.Progressbar('Refueling', 'Refueling Tanker...', 15000, false, t
         maxStations = 0
         StopAnimTask(playerPed, "timetable@gardener@filling_can", "gar_ig_5_filling_can", 3.0, 3.0, -1, 2, 0, 0, 0, 0)
         TriggerServerEvent("InteractSound_SV:PlayOnSource", "fuelstop", 0.4)
-        QBCore.Functions.Notify('You have finished refueling. You will be receiving an email with the location soon!', 'success', 5000)
+        QBCore.Functions.Notify('Você terminou de reabastecer.Você receberá um e -mail com o local em breve!', 'success', 5000)
         RemoveBlip(blip)
         Wait(10000)
         GetNextLocation()
     end, function()
         StopAnimTask(playerPed, "timetable@gardener@filling_can", "gar_ig_5_filling_can", 3.0, 3.0, -1, 2, 0, 0, 0, 0)
         TriggerServerEvent("InteractSound_SV:PlayOnSource", "fuelstop", 0.4)
-        QBCore.Functions.Notify('Stopped Refueling...', 'error', 5000)
+        QBCore.Functions.Notify('Parando de reabastecer ...', 'error', 5000)
     end)
 end)
 
@@ -521,9 +545,9 @@ function GetNextLocation()
 local randomLocation = GetRandomLocation()
 cache_location = randomLocation
     TriggerServerEvent('qb-phone:server:sendNewMail', {
-        sender = "The Boss",
-        subject = "New Fuel Delivery",
-        message = "I am sending the location to your GPS in your truck. Please deliver the fuel to the customer in time!"
+        sender = "O chefe",
+        subject = "Nova entrega de combustível",
+        message = "Estou enviando o local para o seu GPS em seu caminhão.Entregue o combustível ao cliente a tempo!"
     })
     SendBlipToNewLocation(randomLocation)
     RefuelStation(randomLocation)
@@ -556,7 +580,7 @@ function RefuelStation(location)
                         num = 1,
                         event = "pumpRefuel",
                         icon = "fas fa-gas-pump",
-                        label = "Grab Fuel Line",
+                        label = "Pegar bico",
                         action = function()
                             FreezeEntityPosition(trailerId, true)
                             nozzleInHand = true
@@ -575,7 +599,7 @@ function RefuelStation(location)
                         type = "client",
                         event = "ReturnNozzle",
                         icon = "fas fa-hand",
-                        label = "Return Nozzle",
+                        label = "Retornar o bico",
                         action = function()
                             nozzleInHand = false
                             FreezeEntityPosition(trailerId, false)
@@ -613,17 +637,17 @@ RegisterNetEvent('pumpRefuel', function()
 
             if trailerId ~= 0 then
                 if Config.Debug == true then
-                    print("The last trailer attached to the vehicle the player was in has ID: " .. attachedTrailer)
+                    print("O último trailer anexado ao veículo em que o jogador estava no ID: " .. attachedTrailer)
                 end
                 local trailerCoords = GetEntityCoords(trailerId)
                 if Config.Debug == true then
-                    print("The trailer with ID " .. trailerId .. " has coordinates: " .. tostring(trailerCoords))
+                    print("O trailer com id " .. trailerId .. " tem coordenadas: " .. tostring(trailerCoords))
                 end
 
                 if not hasTrailer then
-                    QBCore.Functions.Notify('You need to get your tanker!', 'error', 5000)
+                    QBCore.Functions.Notify('Você precisa pegar seu tanque!', 'error', 5000)
                 elseif maxStations == Config.MaxFuelDeliveries then
-                    QBCore.Functions.Notify('You need to go back and refuel your truck!', 'success', 5000)
+                    QBCore.Functions.Notify('Você precisa voltar e reabastecer seu caminhão!', 'success', 5000)
                     RemoveBlip(blip)
                     Wait(1000)
                     TriggerEvent('spawnFlashingBlip')
@@ -665,7 +689,7 @@ RegisterNetEvent('pumpRefuel', function()
                             local currentcoords = GetEntityCoords(playerPed)
                             local dist = #(grabbednozzlecoords - currentcoords)
                             if dist > 10.0 then
-                                QBCore.Functions.Notify('Your fuel line has broken!', 'error', 5000)
+                                QBCore.Functions.Notify('Sua linha de combustível quebrou!', 'error', 5000)
                                 nozzleInHand = false
                                 FreezeEntityPosition(trailerId, false)
                                 DeleteObject(fuelnozzle2)
@@ -684,7 +708,7 @@ end)
 --/////////////////////////////////////////////////////////////////////////////////////////////////--
 
 function BringToStation()
-    QBCore.Functions.Notify('Go fuel up the station!', 'success', 5000)
+    QBCore.Functions.Notify('Vá abastecer a estação!', 'success', 5000)
     if Config.Debug == true then
         print("cooldown: "..cooldown)
     end
@@ -694,7 +718,7 @@ function BringToStation()
             {
                 event = "refuelStation1",
                 icon = "fas fa-gas-pump",
-                label = "Fuel Station",
+                label = "Abastecer Posto de gasolina",
                 canInteract = function()
                     if nozzleInHand and cooldown == 1 then
                         return true
@@ -725,7 +749,7 @@ RegisterNetEvent('GetTruckerPay', function()
         cooldown = 0
         maxStations = 0
     else
-        QBCore.Functions.Notify('You havent done any work!', 'error', 5000)
+        QBCore.Functions.Notify('Você não fez nenhum trabalho!', 'error', 5000)
     end
 end)
 
@@ -742,9 +766,9 @@ RegisterNetEvent('RestartJob', function()
     local trailerEntity = NetworkGetEntityFromNetworkId(TrailerNetID)
 
     if stationsRefueled > 0 and timestried == 0 then
-        QBCore.Functions.Notify('You have done work! Do you not want to be paid?', 'error', 5000)
+        QBCore.Functions.Notify('Você fez o trabalho!Você não quer ser pago?', 'error', 5000)
         Wait(1000)
-        QBCore.Functions.Notify('Ask me to end your job again to end it...', 'success', 5000)
+        QBCore.Functions.Notify('Peça -me para terminar seu emprego novamente para terminar...', 'success', 5000)
 
         timestried = timestried + 1
     else
@@ -763,11 +787,11 @@ end)
 --/////////////////////////////////////////////////////////////////////////////////////////////////--
 
 RegisterNetEvent('NotEnoughTruckMoney', function()
-    QBCore.Functions.Notify('You need $'..Config.TruckPrice..'!', 'error', 5000)
+    QBCore.Functions.Notify('Você precisa de R$'..Config.TruckPrice..'!', 'error', 5000)
 end)
 
 RegisterNetEvent('NotEnoughTankMoney', function()
-    QBCore.Functions.Notify('You need $'..Config.TankPrice..'!', 'error', 5000)
+    QBCore.Functions.Notify('Você precisa de R$'..Config.TankPrice..'!', 'error', 5000)
 end)
 
 --/////////////////////////////////////////////////////////////////////////////////////////////////--
@@ -781,7 +805,7 @@ CreateThread(function()
                     type = "client",
                     event = "refuelTanker",
                     icon = "fas fa-gas-pump",
-                    label = "grab nozzle",
+                    label = "Pegar bico",
                     canInteract = function()
                         if not IsPedInAnyVehicle(PlayerPedId()) and not nozzleInHand and cooldown == 0 then
                             return true
@@ -793,7 +817,7 @@ CreateThread(function()
                     type = "client",
                     event = "ReturnNozzle",
                     icon = "fas fa-hand",
-                    label = "return nozzle",
+                    label = "Retornar o bico",
                     canInteract = function()
                         if nozzleInHand then
                             return true
@@ -815,7 +839,7 @@ RegisterNetEvent('refuelStation1', function()
     TaskPlayAnim(playerPed, "timetable@gardener@filling_can", "gar_ig_5_filling_can", 8.0, 1.0, -1, 1, 0, 0, 0, 0)
     TriggerServerEvent("InteractSound_SV:PlayOnSource", "refuel", 0.3)
     RefuelingStation = true
-    QBCore.Functions.Progressbar('Refueling', 'Refueling Station...', 30000, false, true, {
+    QBCore.Functions.Progressbar('Refueling', 'Estação de reabastecimento...', 30000, false, true, {
         disableMovement = true,
         disableCarMovement = true,
         disableMouse = false,
@@ -827,14 +851,14 @@ RegisterNetEvent('refuelStation1', function()
             if maxStations == Config.MaxFuelDeliveries then
                 StopAnimTask(playerPed, "timetable@gardener@filling_can", "gar_ig_5_filling_can", 3.0, 3.0, -1, 2, 0, 0, 0, 0)
                 TriggerServerEvent("InteractSound_SV:PlayOnSource", "fuelstop", 0.4)
-                QBCore.Functions.Notify('Your tank is empty! Return to refuel, or get paid!', 'success', 5000)
+                QBCore.Functions.Notify('Seu tanque está vazio!Retornar para reabastecer ou ser pago!', 'success', 5000)
                 RemoveBlip(GasBlip3)
                 FreezeEntityPosition(trailerId, false)
                 TriggerEvent('spawnFlashingBlip')
                 Wait(30000)
                 cooldown = cooldown - 1
             else
-                QBCore.Functions.Notify('You have finished refueling. You will be receiving an email with the next location soon!', 'success', 5000)
+                QBCore.Functions.Notify('Você terminou de reabastecer. Você estará recebendo um e -mail com o próximo local em breve!', 'success', 5000)
                 StopAnimTask(playerPed, "timetable@gardener@filling_can", "gar_ig_5_filling_can", 3.0, 3.0, -1, 2, 0, 0, 0, 0)
                 TriggerServerEvent("InteractSound_SV:PlayOnSource", "fuelstop", 0.4)
                 RemoveBlip(GasBlip3)
@@ -844,7 +868,7 @@ RegisterNetEvent('refuelStation1', function()
         end, function()
         StopAnimTask(playerPed, "timetable@gardener@filling_can", "gar_ig_5_filling_can", 3.0, 3.0, -1, 2, 0, 0, 0, 0)
         TriggerServerEvent("InteractSound_SV:PlayOnSource", "fuelstop", 0.4)
-        QBCore.Functions.Notify('Stopped Refueling...', 'error', 5000)
+        QBCore.Functions.Notify('Parou de reabastecer...', 'error', 5000)
         RefuelingStation = false
     end)
 end)

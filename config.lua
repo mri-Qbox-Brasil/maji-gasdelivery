@@ -15,7 +15,7 @@ Config.Blip = {
 
 Config.Target = 'qb' -- REMOVED SUPPORT FOR OX
 
-Config.UseMenu = false --- Set this to "true" if you like to use the menu to interact with the Boss 
+Config.UseMenu = true --- Set this to "true" if you like to use the menu to interact with the Boss 
 
 Config.Menu = 'qb' -- REMOVED SUPPORT FOR OX
 
@@ -33,11 +33,11 @@ Config.FuelScript = 'cdn-fuel' -- cdn-fuel or ps-fuel or LegacyFuel
 
 Config.PayType = 'bank' -- Where does the money come from? bank or cash
 
-Config.TruckPrice = 5000 -- Cost of the vehicle to pull out //// //// if the player chose the 2nd option (Start Work With Your Own Truck) this is disabled and the "Config.TankPrice" will take place
+Config.TruckPrice = 1000 -- Cost of the vehicle to pull out //// //// if the player chose the 2nd option (Start Work With Your Own Truck) this is disabled and the "Config.TankPrice" will take place
 
 Config.TankPrice = 2000 --- Cost of the tank for the players that use their own trucks to do the job
 
-Config.MaxFuelDeliveries = 5 -- Maximum amount of deliveries before they need to return and refuel
+Config.MaxFuelDeliveries = 1 -- Maximum amount of deliveries before they need to return and refuel
 
 Config.PumpLocations = { -- WHEN ADDING NEW STATIONS, THE VECTOR3 MUST BE WHERE YOU WANT TO SPAWN THE REFUEL PROP
     ["1"] = {

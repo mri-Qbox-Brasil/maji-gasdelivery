@@ -4,8 +4,8 @@ Config.Debug = false
 
 Config.Blip = {
     {
-    title = "Fuel Delivery",
-    color = 12,
+    title = "Caminhoneiro",
+    color = 43,
     id = 477,
     x = 1721.87,
     y = -1557.67,

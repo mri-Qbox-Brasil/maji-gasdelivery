@@ -58,7 +58,8 @@ CreateThread(function()
         Wait(0)
     end
 end)
-
+local targetped
+function CreatePed()
 CreateThread(function()
     local pedHash = GetHashKey(pedModel)
     RequestModel(pedHash)
@@ -67,7 +68,54 @@ CreateThread(function()
         Wait(0)
     end
 
-    local targetped = CreatePed(4, pedHash, pedCoords.x, pedCoords.y, pedCoords.z, pedCoords.w, false, true)
+    -- local targetped = CreatePed(4, pedHash, pedCoords.x, pedCoords.y, pedCoords.z, pedCoords.w, false, true)
+    targetped = exports['rep-talkNPC']:CreateNPC({
+        npc = pedModel,
+        coords = vector3(pedCoords.x, pedCoords.y, pedCoords.z),
+        heading = pedCoords.w,
+        name = 'Seu Wilson',
+        tag = 'CAMINHONEIRO',
+        animScenario = 'WORLD_HUMAN_CLIPBOARD',
+        color = "green",
+        startMSG = 'Ei, você aí, tá precisando de emprego?'
+    }, {
+        [1] = {
+            label = "Como funciona esse trabalho?",
+            shouldClose = false,
+            action = function()
+                exports['rep-talkNPC']:changeDialog("👋 Olá, me chamo 😃**Wilson Silva**, mas pode me chamar de **Seu Wilson**.  \nVou te explicar como é o trabalho de 🚛 caminhoneiro entregador de combustível.  \nO trabalho normal envolve fazer entregas de combustível para diferentes locais. Mas, quando algum posto solicita uma carga urgente de combustível, o primeiro jogador que pegar o trabalho tem a chance de ganhar muito dinheiro! 💰  \nEntão, fique atento às solicitações e aproveite a oportunidade para aumentar seus ganhos.  \nAgora, vá trabalhar e boa sorte! 💼👊",
+                    {
+                        [1] = {
+                            label = "Entendido. Vamos trabalhar!",
+                            shouldClose = true,
+                            action = function()
+                                TriggerEvent("md-opentruckermenu")
+                            end
+                        },
+                        [2] = {
+                            label = "Ah sim... Talvez mais tarde.",
+                            shouldClose = true,
+                            action = function()
+                            end
+                        }
+                    })
+            end
+        },
+        [2] = {
+            label = "Trabalhar",
+            shouldClose = true,
+            action = function()
+                TriggerEvent("md-opentruckermenu")
+            end
+        },
+        [3] = {
+            label = "Talvez outra hora...",
+            shouldClose = true,
+            action = function()
+            end
+        }
+    })
+
     SetEntityAsMissionEntity(targetped, true, true)
     SetBlockingOfNonTemporaryEvents(targetped, true)
     SetPedDiesWhenInjured(targetped, false)
@@ -80,62 +128,24 @@ CreateThread(function()
     SetPedCanPlayInjuredAnims(targetped, false)
     FreezeEntityPosition(targetped, true)
     SetEntityInvincible(targetped, true)
+end)
+end
 
-    if Config.UseMenu == true then
-        if Config.Menu == 'qb' and Config.Target == 'qb' then
-            exports['qb-target']:AddTargetModel({pedHash}, {
-                options = {
-                    {
-                        num = 1,
-                        type = "client",
-                        event = "md-opentruckermenu",
-                        icon = "fas fa-sign-in-alt",
-                        label = "Fale com o chefe!",
-                    },
-                  
-                },
-                distance = 2.0,
-            })
-        end
-    else
-        if Config.Target == 'qb' then
-            exports['qb-target']:AddTargetModel({pedHash}, {
-                options = {
-                    {
-                        num = 1,
-                        type = "server",
-                        event = "md-checkCash",
-                        icon = "fas fa-sign-in-alt",
-                        label = "Alugue um caminhão e comece a trabalhar",
-                    },
-                    {
-                        num = 2,
-                        type = "server",
-                        event = "md-ownedtruck",
-                        icon = "fas fa-sign-in-alt",
-                        label = "Comece a trabalhar com seu próprio caminhão",
-                    },
-                    {
-                        num = 3,
-                        type = "client",
-                        event = "GetTruckerPay",
-                        icon = "fas fa-money-bill-wave",
-                        label = "Obtenha salário",
-                    },
-                    {
-                        num = 4,
-                        type = "client",
-                        event = "RestartJob",
-                        icon = "fas fa-ban",
-                        label = "Reiniciar o trabalho",
-                    },
-                },
-                distance = 2.0,
-            })
-        end
+AddEventHandler('onResourceStart', function(resourceName)
+    if GetCurrentResourceName() == resourceName then
+        CreatePed()
     end
 end)
 
+AddEventHandler('onResourceStop', function(resourceName)
+    if GetCurrentResourceName() == resourceName then
+        DeleteEntity(targetped)
+    end
+end)
+
+AddEventHandler('QBCore:Client:OnPlayerLoaded', function()
+    CreatePed()
+end)
 
 --/////////////////////////////////////////////////////////////////////////////////////////////////--
 
